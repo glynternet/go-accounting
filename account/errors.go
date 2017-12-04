@@ -34,5 +34,5 @@ func (e FieldError) Equal(other FieldError) bool {
 
 // Various error strings describing possible errors with potential new Account items.
 const (
-	EmptyNameError = "Empty name."
+	EmptyNameError = "empty name"
 )

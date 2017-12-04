@@ -13,14 +13,19 @@ import (
 
 func TestNew(t *testing.T) {
 	start := time.Now()
-	a, err := account.New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), start)
+
+	a, err := account.New("", newTestCurrency(t, "GBP"), start)
+	assert.Error(t, err)
+	assert.Nil(t, a)
+
+	a, err = account.New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), start)
 	assert.Nil(t, err)
 	assert.Equal(t, newTestCurrency(t, "EUR"), a.CurrencyCode())
-	assert.False(t, a.End().Valid)
+	assert.False(t, a.Closed().Valid)
 
 	close := start.Add(100 * time.Hour)
 	assert.Nil(t, account.CloseTime(close)(a))
-	assert.True(t, a.End().EqualTime(close))
+	assert.True(t, a.Closed().EqualTime(close))
 }
 
 func TestAccount_MarshalJSON(t *testing.T) {
@@ -38,7 +43,7 @@ func TestAccount_MarshalJSON(t *testing.T) {
 	close := now.Add(48 * time.Hour)
 	err = account.CloseTime(close)(a)
 	assert.Nil(t, err)
-	assert.True(t, a.End().EqualTime(close))
+	assert.True(t, a.Closed().EqualTime(close))
 	bytes, err = json.Marshal(&a)
 	common.FatalIfError(t, err, "Marshalling json")
 

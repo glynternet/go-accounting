@@ -11,37 +11,38 @@ import (
 	"github.com/glynternet/go-money/currency"
 	gtime "github.com/glynternet/go-time"
 	"github.com/stretchr/testify/assert"
+	"errors"
 )
 
 func Test_ValidateAccount(t *testing.T) {
 	testSets := []struct {
-		insertedAccount Account
+		insertedAccount account
 		error
 	}{
 		{
-			insertedAccount: Account{},
+			insertedAccount: account{},
 			error:           FieldError{EmptyNameError},
 		},
 		{
-			insertedAccount: Account{
-				Name: "TEST_ACCOUNT",
+			insertedAccount: account{
+				name: "TEST_ACCOUNT",
 			},
 		},
 		{
-			insertedAccount: Account{
-				Name:      "TEST_ACCOUNT",
+			insertedAccount: account{
+				name:      "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(t, gtime.Start(time.Time{})),
 			},
 		},
 		{
-			insertedAccount: Account{
-				Name:      "TEST_ACCOUNT",
+			insertedAccount: account{
+				name:      "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(t, gtime.End(time.Time{})),
 			},
 		},
 		{
-			insertedAccount: Account{
-				Name: "TEST_ACCOUNT",
+			insertedAccount: account{
+				name: "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(
 					t,
 					gtime.Start(time.Date(1999, 1, 1, 1, 1, 1, 1, time.UTC)),
@@ -59,24 +60,24 @@ func Test_ValidateAccount(t *testing.T) {
 
 func Test_IsOpen(t *testing.T) {
 	testSets := []struct {
-		Account
+		account
 		IsOpen bool
 	}{
 		{
-			Account: Account{},
+			account: account{},
 			IsOpen:  true,
 		},
 		{
-			Account: Account{
+			account: account{
 				timeRange: newTestTimeRange(t, gtime.End(time.Now())),
 			},
 			IsOpen: false,
 		},
 	}
 	for _, testSet := range testSets {
-		actual := testSet.Account.IsOpen()
+		actual := testSet.account.IsOpen()
 		if actual != testSet.IsOpen {
-			t.Errorf("Account IsOpen expected %t, got %t. Account: %v", testSet.IsOpen, actual, testSet.Account)
+			t.Errorf("Account IsOpen expected %t, got %t. Account: %v", testSet.IsOpen, actual, testSet.account)
 		}
 	}
 }
@@ -86,12 +87,12 @@ func Test_AccountValidateBalance(t *testing.T) {
 	var past time.Time
 	future := present.AddDate(1, 0, 0)
 
-	openAccount := Account{
-		Name:      "Test Account",
+	openAccount := account{
+		name:      "Test Account",
 		timeRange: newTestTimeRange(t, gtime.Start(present)),
 	}
-	closedAccount := Account{
-		Name:      "Test Account",
+	closedAccount := account{
+		name:      "Test Account",
 		timeRange: newTestTimeRange(t, gtime.Start(present), gtime.End(future)),
 	}
 
@@ -205,22 +206,32 @@ func Test_NewAccount(t *testing.T) {
 			start: now,
 		},
 	}
-	logTestSet := func(ts testSet) { t.Logf("Start: %s,", ts.start) }
+	logTestSet := func(ts testSet) { t.Logf("Opened: %s,", ts.start) }
 	for _, set := range testSets {
 		a, err := New(set.name, newTestCurrency(t, "YEN"), set.start)
 		if !testNewAccountErrorTypes(t, set.error, err) {
 			logTestSet(set)
 		}
-		if a.Name != set.name {
-			t.Errorf("Unexpected name.\n\tExpected: %s\n\tActual  : %s", set.name, a.Name)
+		if a.name != set.name {
+			t.Errorf("Unexpected name.\n\tExpected: %s\n\tActual  : %s", set.name, a.name)
 			logTestSet(set)
 		}
 		if !a.timeRange.Start().EqualTime(set.start) {
-			t.Errorf("Unexpected start.\n\tExpected: %s\n\tActual  : %s", set.start, a.Start())
+			t.Errorf("Unexpected start.\n\tExpected: %s\n\tActual  : %s", set.start, a.Opened())
 			logTestSet(set)
 		}
 	}
 }
+
+func TestErrorOption(t *testing.T) {
+	errorFn := func(a *account) error {
+		return errors.New("TEST ERROR")
+	}
+	a, err := New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), time.Now(), errorFn)
+	assert.Equal(t, errors.New("TEST ERROR"), err)
+	assert.Nil(t, a)
+}
+
 
 func testNewAccountErrorTypes(t *testing.T, expected, actual error) bool {
 	expectedFieldError, expectedIsTyped := expected.(FieldError)

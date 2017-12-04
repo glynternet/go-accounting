@@ -1,7 +1,6 @@
 package account_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -16,17 +15,9 @@ func TestClosedTime(t *testing.T) {
 	closeFn := account.CloseTime(closeA)
 	a, err := account.New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), start, closeFn)
 	common.FatalIfError(t, err, "Creating Account")
-	assert.True(t, a.End().EqualTime(closeA))
+	assert.True(t, a.Closed().EqualTime(closeA))
 
 	closeB := closeA.Add(100 * time.Hour)
 	common.FatalIfError(t, account.CloseTime(closeB)(a), "Executing CloseTime Option")
-	assert.True(t, a.End().EqualTime(closeB))
-}
-
-func TestErrorOption(t *testing.T) {
-	errorFn := func(a *account.Account) error {
-		return errors.New("TEST ERROR")
-	}
-	_, err := account.New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), time.Now(), errorFn)
-	assert.Equal(t, errors.New("TEST ERROR"), err)
+	assert.True(t, a.Closed().EqualTime(closeB))
 }
