@@ -124,11 +124,13 @@ func (a account) MarshalJSON() ([]byte, error) {
 	type Alias account
 	return json.Marshal(&struct {
 		*Alias
+		Name string
 		Opened   time.Time
 		Closed   gtime.NullTime
 		Currency currency.Code
 	}{
 		Alias:    (*Alias)(&a),
+			Name: a.Name(),
 		Opened:   a.Opened(),
 		Closed:   a.Closed(),
 		Currency: a.currencyCode,
@@ -139,6 +141,7 @@ func (a account) MarshalJSON() ([]byte, error) {
 func (a *account) UnmarshalJSON(data []byte) (err error) {
 	type Alias account
 	aux := &struct {
+		Name string
 		Opened   time.Time
 		Closed   gtime.NullTime
 		Currency string
@@ -167,6 +170,15 @@ func (a *account) UnmarshalJSON(data []byte) (err error) {
 	}
 	a.timeRange = *tr
 	return a.validate()
+}
+
+func UnmarshalJSON(data []byte) (Account, error) {
+	var a account
+	err := json.Unmarshal(data, &a)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
 }
 
 // Equal returns true if both accounts a and b are logically the same.
