@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
-	"errors"
 
 	"github.com/glynternet/go-accounting/balance"
 	"github.com/glynternet/go-money/currency"
 	gtime "github.com/glynternet/go-time"
+	"github.com/pkg/errors"
 )
 // New creates a new Account object with a given name, currency.Code and start
 // time.
@@ -150,22 +150,23 @@ func (a *account) UnmarshalJSON(data []byte) (err error) {
 		Alias: (*Alias)(a),
 	}
 	if err = json.Unmarshal(data, &aux); err != nil {
-		return
+		return errors.Wrap(err, "unmarshalling data to auxilliary")
 	}
+	a.name = aux.Name
 	c, err := currency.NewCode(aux.Currency)
 	if err != nil {
-		return
+		return errors.Wrapf(err, "creating new currency for %s", aux.Currency)
 	}
 	a.currencyCode = *c
 	tr := new(gtime.Range)
 	err = gtime.Start(aux.Opened)(tr)
 	if err != nil {
-		return
+		return errors.Wrap(err, "applying account start time")
 	}
 	if aux.Closed.Valid {
 		err = gtime.End(aux.Closed.Time)(tr)
 		if err != nil {
-			return
+			return errors.Wrap(err, "applying account end time")
 		}
 	}
 	a.timeRange = *tr

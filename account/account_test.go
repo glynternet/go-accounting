@@ -32,11 +32,11 @@ func TestAccount_MarshalJSON(t *testing.T) {
 	now := time.Now()
 	a, err := account.New("TEST ACCOUNT", newTestCurrency(t, "EUR"), now)
 	common.FatalIfError(t, err, "Creating Account for testing")
-	bytes, err := json.Marshal(&a)
+	bytes, err := json.Marshal(*a)
 	common.FatalIfError(t, err, "Marshalling json for testing")
+	assert.NotEmpty(t, bytes)
 
-	var b account.Account
-	err = json.Unmarshal(bytes, &b)
+	b, err := account.UnmarshalJSON(bytes)
 	common.FatalIfError(t, err, "Unmarshalling Account json")
 	assert.True(t, b.Equal(*a), string(bytes))
 
@@ -47,9 +47,8 @@ func TestAccount_MarshalJSON(t *testing.T) {
 	bytes, err = json.Marshal(&a)
 	common.FatalIfError(t, err, "Marshalling json")
 
-	var c account.Account
-	err = json.Unmarshal(bytes, &c)
-	common.FatalIfError(t, err, "Unmarshalling Account json")
+	c, err := account.UnmarshalJSON(bytes)
+	common.FatalIfError(t, err, "Unmarshalling Account json b")
 	assert.True(t, c.Equal(*a), "bytes: %s", bytes)
 }
 

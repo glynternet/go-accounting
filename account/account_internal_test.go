@@ -185,41 +185,35 @@ func Test_AccountValidateBalance(t *testing.T) {
 func Test_NewAccount(t *testing.T) {
 	now := time.Now()
 	type testSet struct {
-		name  string
-		start time.Time
+		name string
+		accountName string
+		start       time.Time
 		error
 	}
-	testSets := []testSet{
+	for _, set := range []testSet{
 		{
-			error: FieldError{EmptyNameError},
+			name: "empty name",
+			error: errors.New(EmptyNameError),
 		},
 		{
-			name:  "TEST_ACCOUNT",
-			start: now,
+			name: "with non-zero start time",
+			accountName: "TEST_ACCOUNT",
+			start:       now,
 		},
-		{
-			name:  "TEST_ACCOUNT_WITH_ACCOUNT_ERROR",
-			start: now,
-		},
-		{
-			name:  "TEST_ACCOUNT",
-			start: now,
-		},
-	}
-	logTestSet := func(ts testSet) { t.Logf("Opened: %s,", ts.start) }
-	for _, set := range testSets {
-		a, err := New(set.name, newTestCurrency(t, "YEN"), set.start)
-		if !testNewAccountErrorTypes(t, set.error, err) {
-			logTestSet(set)
-		}
-		if a.name != set.name {
-			t.Errorf("Unexpected name.\n\tExpected: %s\n\tActual  : %s", set.name, a.name)
-			logTestSet(set)
-		}
-		if !a.timeRange.Start().EqualTime(set.start) {
-			t.Errorf("Unexpected start.\n\tExpected: %s\n\tActual  : %s", set.start, a.Opened())
-			logTestSet(set)
-		}
+	} {
+		t.Run(set.name, func(t *testing.T) {
+			a, err := New(set.accountName, newTestCurrency(t, "YEN"), set.start)
+			if set.error != nil {
+				assert.Equal(t, set.error.Error(), err.Error())
+				assert.Nil(t, a)
+				return
+			}
+			assert.Nil(t, err)
+			assert.Equal(t, set.accountName, a.name)
+			if !a.timeRange.Start().EqualTime(set.start) {
+				t.Errorf("Unexpected start.\n\tExpected: %s\n\tActual  : %s", set.start, a.Opened())
+			}
+		})
 	}
 }
 
@@ -230,22 +224,6 @@ func TestErrorOption(t *testing.T) {
 	a, err := New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), time.Now(), errorFn)
 	assert.Equal(t, errors.New("TEST ERROR"), err)
 	assert.Nil(t, a)
-}
-
-
-func testNewAccountErrorTypes(t *testing.T, expected, actual error) bool {
-	expectedFieldError, expectedIsTyped := expected.(FieldError)
-	actualFieldError, actualIsTyped := actual.(FieldError)
-	switch {
-	case actualIsTyped != expectedIsTyped,
-		!actualIsTyped && actual != expected:
-		t.Errorf("Unexpected error.\n\tExpected: %s\n\tActual  : %s", expected, actual)
-		return false
-	case actualIsTyped && !actualFieldError.Equal(expectedFieldError):
-		t.Errorf("Error is correct type but unexpected contents.\n\tExpected: %s\n\tActual  : %s", expectedFieldError, actualFieldError)
-		return false
-	}
-	return true
 }
 
 func newTestCurrency(t *testing.T, code string) currency.Code {
