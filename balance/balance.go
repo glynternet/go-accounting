@@ -72,3 +72,10 @@ func (bs Balances) Latest() (l Balance, err error) {
 	}
 	return
 }
+
+// AtTime returns the latest balance of the Balances that is at or before a given time.
+// If multiple Balances have the same date that is the latest, the Balance that
+// was encountered last will be returned.
+func (bs Balances) AtTime() (b Balance, err error) {
+	return Balance{}, errors.New(ErrEmptyBalancesMessage)
+}

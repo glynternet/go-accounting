@@ -168,6 +168,26 @@ func TestBalances_Latest(t *testing.T) {
 	}
 }
 
+func TestBalances_AtDate(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		balances balance.Balances
+		error
+		expected balance.Balance
+	}{
+		{
+			name:  "zero-values",
+			error: errors.New(balance.ErrEmptyBalancesMessage),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			b, err := test.balances.AtTime()
+			assert.Equal(t, test.expected, b)
+			assert.Equal(t, test.error, err)
+		})
+	}
+}
+
 func testBalanceResults(t *testing.T, expected BalanceErrorSet, actual BalanceErrorSet) (message string) {
 	if expected.error != actual.error {
 		switch {
