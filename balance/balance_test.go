@@ -22,8 +22,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestBalance_Equal(t *testing.T) {
-	now := time.Now()
-	a := newTestBalance(t, now, balance.Amount(123))
+	year := 300
+	a := newTestBalance(t, year, balance.Amount(123))
 	for _, test := range []struct {
 		name  string
 		b     balance.Balance
@@ -31,16 +31,16 @@ func TestBalance_Equal(t *testing.T) {
 	}{
 		{
 			name:  "equal",
-			b:     newTestBalance(t, now, balance.Amount(123)),
+			b:     newTestBalance(t, year, balance.Amount(123)),
 			equal: true,
 		},
 		{
 			name: "different amount",
-			b:    newTestBalance(t, now, balance.Amount(-123)),
+			b:    newTestBalance(t, year, balance.Amount(-123)),
 		},
 		{
 			name: "different time",
-			b:    newTestBalance(t, now.Add(1), balance.Amount(123)),
+			b:    newTestBalance(t, year+1, balance.Amount(123)),
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -68,34 +68,34 @@ func TestBalances_Earliest(t *testing.T) {
 		{
 			name: "with single date",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				newTestBalance(t, 2000),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				Balance: newTestBalance(t, 2000),
 				error:   nil,
 			},
 		},
 		{
 			name: "with duplicate date",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(20)),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				Balance: newTestBalance(t, 2000, balance.Amount(10)),
 				error:   nil,
 			},
 		},
 		{
 			name: "multiple various dates",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
-				newTestBalance(t, time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				newTestBalance(t, 2001, balance.Amount(1)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(8237)),
+				newTestBalance(t, 2002, balance.Amount(489)),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				Balance: newTestBalance(t, 2000, balance.Amount(10)),
 				error:   nil,
 			},
 		},
@@ -125,34 +125,34 @@ func TestBalances_Latest(t *testing.T) {
 		{
 			name: "with single date",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				newTestBalance(t, 2000),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				Balance: newTestBalance(t, 2000),
 				error:   nil,
 			},
 		},
 		{
 			name: "with duplicate date",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(20)),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				Balance: newTestBalance(t, 2000, balance.Amount(20)),
 				error:   nil,
 			},
 		},
 		{
 			name: "multiple various dates",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
-				newTestBalance(t, time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				newTestBalance(t, 2001, balance.Amount(1)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(8237)),
+				newTestBalance(t, 2002, balance.Amount(489)),
 			},
 			expected: BalanceErrorSet{
-				Balance: newTestBalance(t, time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				Balance: newTestBalance(t, 2002, balance.Amount(489)),
 				error:   nil,
 			},
 		},
@@ -200,65 +200,65 @@ func TestBalances_AtDate(t *testing.T) {
 		{
 			name: "with single date and atdate before",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				newTestBalance(t, 2000),
 			},
-			at:    time.Date(1000, 1, 1, 1, 1, 1, 1, time.UTC),
+			at:    newTestDate(1000),
 			error: errors.New(balance.ErrNoBalances),
 		},
 		{
 			name: "with single date and atdate on",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				newTestBalance(t, 2000),
 			},
-			at:       time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC),
-			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			at:       newTestDate(2000),
+			expected: newTestBalance(t, 2000),
 		},
 		{
 			name: "with single date and atdate after",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				newTestBalance(t, 2000),
 			},
-			at:       time.Date(3000, 1, 1, 1, 1, 1, 1, time.UTC),
-			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			at:       newTestDate(3000),
+			expected: newTestBalance(t, 2000),
 		},
 		{
 			name: "with duplicate date and invalid atdate",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(20)),
 			},
 			error: errors.New(balance.ErrNoBalances),
 		},
 		{
 			name: "with duplicate date and valid atdate",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				newTestBalance(t, 2000, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(20)),
 			},
-			at:       time.Date(3000, 1, 1, 1, 1, 1, 1, time.UTC),
-			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+			at:       newTestDate(3000),
+			expected: newTestBalance(t, 2000, balance.Amount(20)),
 		},
 		{
 			name: "multiple various dates and date after",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
-				newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				newTestBalance(t, 2001, balance.Amount(1)),
+				newTestBalance(t, 2001, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(8237)),
+				newTestBalance(t, 2003, balance.Amount(489)),
 			},
-			at:       time.Date(2004, 1, 1, 1, 1, 1, 1, time.UTC),
-			expected: newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+			at:       newTestDate(2004),
+			expected: newTestBalance(t, 2003, balance.Amount(489)),
 		},
 		{
 			name: "multiple various dates and atdate in middle",
 			balances: balance.Balances{
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
-				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
-				newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				newTestBalance(t, 2001, balance.Amount(1)),
+				newTestBalance(t, 2001, balance.Amount(10)),
+				newTestBalance(t, 2000, balance.Amount(8237)),
+				newTestBalance(t, 2003, balance.Amount(489)),
 			},
-			at:       time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC),
-			expected: newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+			at:       newTestDate(2002),
+			expected: newTestBalance(t, 2001, balance.Amount(10)),
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -333,8 +333,12 @@ func TestBalance_JSONLoop(t *testing.T) {
 	}
 }
 
-func newTestBalance(t *testing.T, date time.Time, options ...balance.Option) balance.Balance {
-	b, err := balance.New(date, options...)
+func newTestBalance(t *testing.T, year int, options ...balance.Option) balance.Balance {
+	b, err := balance.New(newTestDate(year), options...)
 	common.FatalIfError(t, err, "Creating new Balance")
 	return *b
+}
+
+func newTestDate(year int) time.Time {
+	return time.Date(year, 1, 1, 1, 1, 1, 1, time.UTC)
 }
