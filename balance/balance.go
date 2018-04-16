@@ -45,15 +45,14 @@ func (bs Balances) Sum() (s int) {
 
 // Earliest returns the Balance with the earliest Date contained in a Balances set.
 // If multiple Balance object have the same Date, the Balance encountered first will be returned.
-func (bs Balances) Earliest() (e *Balance, err error) {
+func (bs Balances) Earliest() (e Balance, err error) {
 	if len(bs) == 0 {
 		return e, errors.New(ErrEmptyBalancesMessage)
 	}
-	e = new(Balance)
-	*e = Balance{Date: time.Date(2000000, 1, 1, 1, 1, 1, 1, time.UTC)}
+	e = Balance{Date: time.Date(2000000, 1, 1, 1, 1, 1, 1, time.UTC)}
 	for _, b := range bs {
-		if b.Date.Before((*e).Date) {
-			*e = b
+		if b.Date.Before((e).Date) {
+			e = b
 		}
 	}
 	return
@@ -61,15 +60,14 @@ func (bs Balances) Earliest() (e *Balance, err error) {
 
 // Latest returns the Balance with the latest Date contained in a Balances set.
 // If multiple Balance object have the same Date, the Balance encountered last will be returned.
-func (bs Balances) Latest() (l *Balance, err error) {
+func (bs Balances) Latest() (l Balance, err error) {
 	if len(bs) == 0 {
 		return l, errors.New(ErrEmptyBalancesMessage)
 	}
-	l = new(Balance)
-	*l = Balance{Date: time.Date(0, 1, 1, 1, 1, 1, 1, time.UTC)}
+	l = Balance{Date: time.Date(0, 1, 1, 1, 1, 1, 1, time.UTC)}
 	for _, b := range bs {
-		if !(*l).Date.After(b.Date) {
-			*l = b
+		if !l.Date.After(b.Date) {
+			l = b
 		}
 	}
 	return
