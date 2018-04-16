@@ -99,47 +99,60 @@ func TestBalances_Earliest(t *testing.T) {
 	}
 }
 
-func Test_Latest_EmptyBalances(t *testing.T) {
-	balances := balance.Balances{}
-	expected := BalanceErrorSet{error: errors.New(balance.ErrEmptyBalancesMessage)}
-	testLatestSet(t, expected, balances)
-}
-
-func Test_Latest_BalancesWithSingleDate(t *testing.T) {
-	latest := newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC))
-	balances := balance.Balances{latest}
-	expected := BalanceErrorSet{latest, nil}
-	testLatestSet(t, expected, balances)
-}
-
-func Test_Latest_BalancesWithSameDate(t *testing.T) {
-	date := time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)
-	latest := newTestBalance(t, date, balance.Amount(10))
-	other := newTestBalance(t, date, balance.Amount(20))
-	balances := balance.Balances{other, latest}
-	expected := BalanceErrorSet{latest, nil}
-	testLatestSet(t, expected, balances)
-}
-
-func Test_Latest_BalancesWithMultipleDates(t *testing.T) {
-	date1 := time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)
-	date2 := time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC)
-	date3 := time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC)
-	latest := newTestBalance(t, date3, balance.Amount(20))
-	other1 := newTestBalance(t, date2)
-	other2 := newTestBalance(t, date3, balance.Amount(10))
-	other3 := newTestBalance(t, date1, balance.Amount(-20))
-	balances := balance.Balances{other1, other2, latest, other3}
-	expected := BalanceErrorSet{latest, nil}
-	testLatestSet(t, expected, balances)
-}
-
-func testLatestSet(t *testing.T, expected BalanceErrorSet, balances balance.Balances) {
-	actualBalance, actualError := balances.Latest()
-	actual := BalanceErrorSet{Balance: actualBalance, error: actualError}
-	res := testBalanceResults(t, expected, actual)
-	if len(res) > 0 {
-		t.Errorf("%s. Balances: %+v", res, balances)
+func TestBalances_Latest(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		balances balance.Balances
+		expected BalanceErrorSet
+	}{
+		{
+			name:     "empty balances",
+			balances: balance.Balances{},
+			expected: BalanceErrorSet{error: errors.New(balance.ErrEmptyBalancesMessage)},
+		},
+		{
+			name: "with single date",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			},
+			expected: BalanceErrorSet{
+				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+				error:   nil,
+			},
+		},
+		{
+			name: "with duplicate date",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+			},
+			expected: BalanceErrorSet{
+				Balance: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+				error:   nil,
+			},
+		},
+		{
+			name: "multiple various dates",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
+				newTestBalance(t, time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+			},
+			expected: BalanceErrorSet{
+				Balance: newTestBalance(t, time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+				error:   nil,
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			actualBalance, actualError := test.balances.Latest()
+			actual := BalanceErrorSet{Balance: actualBalance, error: actualError}
+			msg := testBalanceResults(t, test.expected, actual)
+			if len(msg) > 0 {
+				t.Errorf("%s. Balances: %+v", msg, test.balances)
+			}
+		})
 	}
 }
 
