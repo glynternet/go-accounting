@@ -178,7 +178,7 @@ func TestBalances_AtDate(t *testing.T) {
 	}{
 		{
 			name:  "zero-values",
-			error: errors.New(balance.ErrEmptyBalancesMessage),
+			error: errors.New(balance.ErrNoBalances),
 		},
 		{
 			name: "with single date and atdate before",

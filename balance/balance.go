@@ -54,7 +54,7 @@ func (bs Balances) Earliest() (e Balance, err error) {
 	if len(bs) == 0 {
 		return e, errors.New(ErrEmptyBalancesMessage)
 	}
-	e = Balance{Date: time.Date(2000000, 1, 1, 1, 1, 1, 1, time.UTC)}
+	e = bs[0]
 	for _, b := range bs {
 		if b.Date.Before((e).Date) {
 			e = b
@@ -69,7 +69,7 @@ func (bs Balances) Latest() (l Balance, err error) {
 	if len(bs) == 0 {
 		return l, errors.New(ErrEmptyBalancesMessage)
 	}
-	l = Balance{Date: time.Date(0, 1, 1, 1, 1, 1, 1, time.UTC)}
+	l = bs[0]
 	for _, b := range bs {
 		if !l.Date.After(b.Date) {
 			l = b
@@ -82,9 +82,6 @@ func (bs Balances) Latest() (l Balance, err error) {
 // If multiple Balances have the same date that is the latest, the Balance that
 // was encountered last will be returned.
 func (bs Balances) AtTime(t time.Time) (Balance, error) {
-	if len(bs) == 0 {
-		return Balance{}, errors.New(ErrEmptyBalancesMessage)
-	}
 	var at *Balance
 	for i := range bs {
 		if bs[i].Date.After(t) {
