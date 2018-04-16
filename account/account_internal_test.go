@@ -6,42 +6,43 @@ import (
 	"testing"
 	"time"
 
+	"errors"
+
 	"github.com/glynternet/go-accounting/balance"
 	"github.com/glynternet/go-money/common"
 	"github.com/glynternet/go-money/currency"
 	gtime "github.com/glynternet/go-time"
 	"github.com/stretchr/testify/assert"
-	"errors"
 )
 
 func Test_ValidateAccount(t *testing.T) {
 	testSets := []struct {
-		insertedAccount account
+		insertedAccount Account
 		error
 	}{
 		{
-			insertedAccount: account{},
+			insertedAccount: Account{},
 			error:           FieldError{EmptyNameError},
 		},
 		{
-			insertedAccount: account{
+			insertedAccount: Account{
 				name: "TEST_ACCOUNT",
 			},
 		},
 		{
-			insertedAccount: account{
+			insertedAccount: Account{
 				name:      "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(t, gtime.Start(time.Time{})),
 			},
 		},
 		{
-			insertedAccount: account{
+			insertedAccount: Account{
 				name:      "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(t, gtime.End(time.Time{})),
 			},
 		},
 		{
-			insertedAccount: account{
+			insertedAccount: Account{
 				name: "TEST_ACCOUNT",
 				timeRange: newTestTimeRange(
 					t,
@@ -60,24 +61,24 @@ func Test_ValidateAccount(t *testing.T) {
 
 func Test_IsOpen(t *testing.T) {
 	testSets := []struct {
-		account
+		Account
 		IsOpen bool
 	}{
 		{
-			account: account{},
+			Account: Account{},
 			IsOpen:  true,
 		},
 		{
-			account: account{
+			Account: Account{
 				timeRange: newTestTimeRange(t, gtime.End(time.Now())),
 			},
 			IsOpen: false,
 		},
 	}
 	for _, testSet := range testSets {
-		actual := testSet.account.IsOpen()
+		actual := testSet.Account.IsOpen()
 		if actual != testSet.IsOpen {
-			t.Errorf("Account IsOpen expected %t, got %t. Account: %v", testSet.IsOpen, actual, testSet.account)
+			t.Errorf("Account IsOpen expected %t, got %t. Account: %v", testSet.IsOpen, actual, testSet.Account)
 		}
 	}
 }
@@ -87,11 +88,11 @@ func Test_AccountValidateBalance(t *testing.T) {
 	var past time.Time
 	future := present.AddDate(1, 0, 0)
 
-	openAccount := account{
+	openAccount := Account{
 		name:      "Test Account",
 		timeRange: newTestTimeRange(t, gtime.Start(present)),
 	}
-	closedAccount := account{
+	closedAccount := Account{
 		name:      "Test Account",
 		timeRange: newTestTimeRange(t, gtime.Start(present), gtime.End(future)),
 	}
@@ -185,18 +186,18 @@ func Test_AccountValidateBalance(t *testing.T) {
 func Test_NewAccount(t *testing.T) {
 	now := time.Now()
 	type testSet struct {
-		name string
+		name        string
 		accountName string
 		start       time.Time
 		error
 	}
 	for _, set := range []testSet{
 		{
-			name: "empty name",
+			name:  "empty name",
 			error: errors.New(EmptyNameError),
 		},
 		{
-			name: "with non-zero start time",
+			name:        "with non-zero start time",
 			accountName: "TEST_ACCOUNT",
 			start:       now,
 		},
@@ -218,7 +219,7 @@ func Test_NewAccount(t *testing.T) {
 }
 
 func TestErrorOption(t *testing.T) {
-	errorFn := func(a *account) error {
+	errorFn := func(a *Account) error {
 		return errors.New("TEST ERROR")
 	}
 	a, err := New("TEST_ACCOUNT", newTestCurrency(t, "EUR"), time.Now(), errorFn)
