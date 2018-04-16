@@ -168,6 +168,23 @@ func TestBalances_Latest(t *testing.T) {
 	}
 }
 
+func testBalanceResults(t *testing.T, expected BalanceErrorSet, actual BalanceErrorSet) (message string) {
+	if expected.error != actual.error {
+		switch {
+		case expected.error == nil:
+			message = fmt.Sprintf("Expected no error but got %v", actual)
+		case actual.error == nil:
+			message = fmt.Sprintf("Error error (%v) but didn't get one", expected)
+		case expected.error.Error() == actual.error.Error():
+			break
+		default:
+			message = fmt.Sprintf("Error unexpected\nExpected: %s\nActual  : %s", expected, actual)
+		}
+	}
+	assert.Equal(t, expected.Balance, actual.Balance)
+	return
+}
+
 func TestBalances_AtDate(t *testing.T) {
 	for _, test := range []struct {
 		name     string
@@ -204,14 +221,45 @@ func TestBalances_AtDate(t *testing.T) {
 			at:       time.Date(3000, 1, 1, 1, 1, 1, 1, time.UTC),
 			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
 		},
-		//{
-		//	name: "with duplicate date",
-		//	balances: balance.Balances{
-		//		newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
-		//		newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
-		//	},
-		//	expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
-		//},
+		{
+			name: "with duplicate date and invalid atdate",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+			},
+			error: errors.New(balance.ErrNoBalances),
+		},
+		{
+			name: "with duplicate date and valid atdate",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+			},
+			at:       time.Date(3000, 1, 1, 1, 1, 1, 1, time.UTC),
+			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+		},
+		{
+			name: "multiple various dates and date after",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
+				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
+				newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+			},
+			at:       time.Date(2004, 1, 1, 1, 1, 1, 1, time.UTC),
+			expected: newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+		},
+		{
+			name: "multiple various dates and atdate in middle",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(1)),
+				newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(8237)),
+				newTestBalance(t, time.Date(2003, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(489)),
+			},
+			at:       time.Date(2002, 1, 1, 1, 1, 1, 1, time.UTC),
+			expected: newTestBalance(t, time.Date(2001, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			b, err := test.balances.AtTime(test.at)
@@ -219,23 +267,6 @@ func TestBalances_AtDate(t *testing.T) {
 			assert.Equal(t, test.error, err)
 		})
 	}
-}
-
-func testBalanceResults(t *testing.T, expected BalanceErrorSet, actual BalanceErrorSet) (message string) {
-	if expected.error != actual.error {
-		switch {
-		case expected.error == nil:
-			message = fmt.Sprintf("Expected no error but got %v", actual)
-		case actual.error == nil:
-			message = fmt.Sprintf("Error error (%v) but didn't get one", expected)
-		case expected.error.Error() == actual.error.Error():
-			break
-		default:
-			message = fmt.Sprintf("Error unexpected\nExpected: %s\nActual  : %s", expected, actual)
-		}
-	}
-	assert.Equal(t, expected.Balance, actual.Balance)
-	return
 }
 
 func TestBalances_Sum(t *testing.T) {

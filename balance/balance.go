@@ -50,32 +50,32 @@ func (bs Balances) Sum() (s int) {
 // If multiple Balance object have the same Date, the Balance encountered first
 // will be returned. If there are no appropriate Balances found in the set, an
 // ErrNoBalances will be returned with a zero-value Balance.
-func (bs Balances) Earliest() (e Balance, err error) {
+func (bs Balances) Earliest() (Balance, error) {
 	if len(bs) == 0 {
-		return e, errors.New(ErrEmptyBalancesMessage)
+		return Balance{}, errors.New(ErrEmptyBalancesMessage)
 	}
-	e = bs[0]
+	e := bs[0]
 	for _, b := range bs {
 		if b.Date.Before((e).Date) {
 			e = b
 		}
 	}
-	return
+	return e, nil
 }
 
 // Latest returns the Balance with the latest Date contained in a Balances set.
 // If multiple Balance object have the same Date, the Balance encountered last will be returned.
-func (bs Balances) Latest() (l Balance, err error) {
+func (bs Balances) Latest() (Balance, error) {
 	if len(bs) == 0 {
-		return l, errors.New(ErrEmptyBalancesMessage)
+		return Balance{}, errors.New(ErrEmptyBalancesMessage)
 	}
-	l = bs[0]
+	l := bs[0]
 	for _, b := range bs {
 		if !l.Date.After(b.Date) {
 			l = b
 		}
 	}
-	return
+	return l, nil
 }
 
 // AtTime returns the latest balance of the Balances that is at or before a given time.
@@ -87,7 +87,12 @@ func (bs Balances) AtTime(t time.Time) (Balance, error) {
 		if bs[i].Date.After(t) {
 			continue
 		}
-		at = &bs[i]
+		if at == nil {
+			at = &bs[i]
+		}
+		if !at.Date.After(bs[i].Date) {
+			at = &bs[i]
+		}
 	}
 	if at == nil {
 		return Balance{}, errors.New(ErrNoBalances)
