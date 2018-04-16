@@ -171,17 +171,50 @@ func TestBalances_Latest(t *testing.T) {
 func TestBalances_AtDate(t *testing.T) {
 	for _, test := range []struct {
 		name     string
+		at       time.Time
 		balances balance.Balances
-		error
 		expected balance.Balance
+		error
 	}{
 		{
 			name:  "zero-values",
 			error: errors.New(balance.ErrEmptyBalancesMessage),
 		},
+		{
+			name: "with single date and atdate before",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			},
+			at:    time.Date(1000, 1, 1, 1, 1, 1, 1, time.UTC),
+			error: errors.New(balance.ErrNoBalances),
+		},
+		{
+			name: "with single date and atdate on",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			},
+			at:       time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC),
+			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+		},
+		{
+			name: "with single date and atdate after",
+			balances: balance.Balances{
+				newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+			},
+			at:       time.Date(3000, 1, 1, 1, 1, 1, 1, time.UTC),
+			expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)),
+		},
+		//{
+		//	name: "with duplicate date",
+		//	balances: balance.Balances{
+		//		newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(10)),
+		//		newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+		//	},
+		//	expected: newTestBalance(t, time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC), balance.Amount(20)),
+		//},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			b, err := test.balances.AtTime()
+			b, err := test.balances.AtTime(test.at)
 			assert.Equal(t, test.expected, b)
 			assert.Equal(t, test.error, err)
 		})
