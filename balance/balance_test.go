@@ -24,17 +24,29 @@ func TestNew(t *testing.T) {
 func TestBalance_Equal(t *testing.T) {
 	now := time.Now()
 	a := newTestBalance(t, now, balance.Amount(123))
-	b := newTestBalance(t, now, balance.Amount(123))
-	assert.True(t, a.Equal(b))
-
-	b = newTestBalance(t, now, balance.Amount(-123))
-	assert.True(t, !a.Equal(b))
-
-	b = newTestBalance(t, now, balance.Amount(123))
-	assert.True(t, a.Equal(b))
-
-	b = newTestBalance(t, now.Add(1), balance.Amount(123))
-	assert.True(t, !a.Equal(b))
+	for _, test := range []struct {
+		name  string
+		b     balance.Balance
+		equal bool
+	}{
+		{
+			name:  "equal",
+			b:     newTestBalance(t, now, balance.Amount(123)),
+			equal: true,
+		},
+		{
+			name: "different amount",
+			b:    newTestBalance(t, now, balance.Amount(-123)),
+		},
+		{
+			name: "different time",
+			b:    newTestBalance(t, now.Add(1), balance.Amount(123)),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.equal, a.Equal(test.b))
+		})
+	}
 }
 
 type BalanceErrorSet struct {
