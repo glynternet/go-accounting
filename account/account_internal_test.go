@@ -2,11 +2,10 @@ package account
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
-
-	"errors"
 
 	"github.com/glynternet/go-accounting/balance"
 	"github.com/glynternet/go-money/common"
@@ -60,26 +59,97 @@ func Test_ValidateAccount(t *testing.T) {
 }
 
 func Test_IsOpen(t *testing.T) {
-	testSets := []struct {
-		Account
-		IsOpen bool
+	reference := time.Date(2000, 1, 1, 1, 1, 1, 1, time.UTC)
+	before := reference.Add(-24 * time.Hour)
+	after := reference.Add(24 * time.Hour)
+	code, err := currency.NewCode("EUR")
+	common.FatalIfError(t, err, "creating new currency code")
+
+	for _, test := range []struct {
+		name   string
+		open   time.Time
+		close  gtime.NullTime
+		openAt bool
 	}{
 		{
-			Account: Account{},
-			IsOpen:  true,
+			name:   "zero-values",
+			openAt: true,
 		},
 		{
-			Account: Account{
-				timeRange: newTestTimeRange(t, gtime.End(time.Now())),
-			},
-			IsOpen: false,
+			name:   "opened before and never closed",
+			open:   before,
+			openAt: true,
 		},
-	}
-	for _, testSet := range testSets {
-		actual := testSet.Account.IsOpen()
-		if actual != testSet.IsOpen {
-			t.Errorf("Account IsOpen expected %t, got %t. Account: %v", testSet.IsOpen, actual, testSet.Account)
-		}
+		{
+			name:   "opened at reference time and never closed",
+			open:   reference,
+			openAt: true,
+		},
+		{
+			name: "opened after and never closed",
+			open: after,
+		},
+		{
+			name: "opened before and closed before",
+			open: before,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  before,
+			},
+		},
+		{
+			name: "opened before and closed at reference time",
+			open: before,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  reference,
+			},
+		},
+		{
+			name: "opened before and closed after",
+			open: before,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  after,
+			},
+			openAt: true,
+		},
+		{
+			name: "opened at reference and closed at reference",
+			open: reference,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  reference,
+			},
+		},
+		{
+			name: "opened at reference and closed after",
+			open: reference,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  after,
+			},
+			openAt: true,
+		},
+		{
+			name: "opened after and closed after",
+			open: after,
+			close: gtime.NullTime{
+				Valid: true,
+				Time:  after,
+			},
+			openAt: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			a, err := New(test.name, *code, test.open)
+			common.FatalIfError(t, err, "creating new account")
+			if test.close.Valid {
+				err := CloseTime(test.close.Time)(a)
+				common.FatalIfError(t, err, "applying end time")
+			}
+			assert.Equal(t, test.openAt, a.OpenAt(reference))
+		})
 	}
 }
 

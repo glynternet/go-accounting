@@ -70,9 +70,18 @@ func (a Account) TimeRange() gtime.Range {
 	return a.timeRange
 }
 
-// IsOpen return true if the Account is open.
-func (a Account) IsOpen() bool {
-	return !a.timeRange.End().Valid
+// OpenAt returns true if the Account is open at a given time.
+// If an account is closed at the exact time as the reference time, OpenAt will
+// return false, including when an account was opened and closed at exactly the
+// same time.
+func (a Account) OpenAt(t time.Time) bool {
+	if a.Opened().After(t) {
+		return false
+	}
+	if a.Closed().Valid && !a.Closed().Time.After(t) {
+		return false
+	}
+	return true
 }
 
 // CurrencyCode returns the currency code of the Account.
